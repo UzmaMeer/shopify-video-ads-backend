@@ -1,10 +1,11 @@
+import os
 import redis
 from rq import Queue
 from motor.motor_asyncio import AsyncIOMotorClient
 
 # MongoDB Setup
-MONGO_DETAILS = "mongodb://localhost:27017"
-client_db = AsyncIOMotorClient(MONGO_DETAILS)
+mongo_uri = os.getenv("MONGO_DETAILS") # 🟢 Reads from .env
+client_db = AsyncIOMotorClient(mongo_uri)
 database = client_db.video_ai_db
 
 # Collections

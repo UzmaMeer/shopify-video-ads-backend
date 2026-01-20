@@ -30,8 +30,8 @@ BGM_URL = "https://www.bensound.com/bensound-music/bensound-elevate.mp3"
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 
 # Database Connection
-MONGO_DETAILS = "mongodb://localhost:27017"
-client_db = AsyncIOMotorClient(MONGO_DETAILS)
+mongo_uri = os.getenv("MONGO_DETAILS") # 🟢 Reads from .env
+client_db = AsyncIOMotorClient(mongo_uri)
 db = client_db.video_ai_db
 brand_collection = db.get_collection("brand_settings")
 

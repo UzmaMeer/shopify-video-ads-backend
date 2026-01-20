@@ -1,23 +1,27 @@
 import os
 import requests
 import google.generativeai as genai
-from pymongo import MongoClient
+from pymongo import MongoClient  # ✅ Using Synchronous client (Best for Workers)
 from datetime import datetime
+from dotenv import load_dotenv
 
-# 🟢 CRITICAL IMPORT: This is the specific line you were missing!
-# This tells tasks.py where to find the video generation logic.
+# 🟢 Load environment variables from .env file
+load_dotenv()
+
+# 🟢 CRITICAL IMPORT: Imports the video generation logic
 from utils import generate_video_from_images 
 
 # --- CONFIGURATION ---
 # Database Connection
-MONGO_DETAILS = "mongodb://localhost:27017"
-client = MongoClient(MONGO_DETAILS)
+mongo_uri = os.getenv("MONGO_DETAILS")
+client = MongoClient(mongo_uri) 
 db = client.video_ai_db
 video_jobs_collection = db.get_collection("video_jobs")
 
 # API Keys
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-BASE_PUBLIC_URL = "https://snakiest-edward-autochthonously.ngrok-free.dev"
+# Fallback to Ngrok if env is missing
+BASE_PUBLIC_URL = os.getenv("BASE_PUBLIC_URL", "https://snakiest-edward-autochthonously.ngrok-free.dev")
 
 # --- HELPER FUNCTIONS ---
 def generate_viral_caption(title, desc):
@@ -38,6 +42,7 @@ def process_video_job_task(job_id, image_urls, title, desc, logo_url, voice_gend
 
     # 1. Helper to update DB progress
     def update_progress_db(percent):
+        # 🟢 Note: 'await' is not needed when using MongoClient
         video_jobs_collection.update_one(
             {"job_id": job_id},
             {"$set": {"progress": percent, "status": "processing", "updated_at": datetime.utcnow()}}
@@ -48,7 +53,6 @@ def process_video_job_task(job_id, image_urls, title, desc, logo_url, voice_gend
         update_progress_db(10)
 
         # 2. Call Utils to Generate Video
-        # 🟢 This function call failed before because of the missing import above
         filename, script_used = generate_video_from_images(
             image_urls=image_urls, 
             product_title=title, 

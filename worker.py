@@ -1,14 +1,21 @@
 import os
+from dotenv import load_dotenv  # 🟢 ADD THIS
+
+# 🟢 LOAD .ENV BEFORE DOING ANYTHING ELSE
+load_dotenv()
+
 import redis
 import time
 from rq import SimpleWorker, Queue
 
 # The queue name must match what you use in database.py
 listen = ['default']
-redis_url = 'redis://localhost:6379'
+# 🟢 Use the dynamic URL from .env (for AWS) or fallback to local
+redis_url = os.getenv('REDIS_URL', 'redis://localhost:6379')
 
 def run_worker():
     print("👷 Windows Worker Initializing...")
+    print(f"🔑 checking key loaded: {'YES' if os.getenv('GEMINI_API_KEY') else 'NO'}") # Debug print
     
     while True:
         try:
