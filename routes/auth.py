@@ -18,6 +18,16 @@ oauth.register(
     api_base_url='https://graph.facebook.com/', client_kwargs={'scope': 'public_profile,pages_show_list,pages_read_engagement,pages_manage_posts,instagram_basic,instagram_content_publish,business_management'},
 )
 oauth.register(
+    name='facebook',
+    client_id=META_CLIENT_ID,
+    client_secret=META_CLIENT_SECRET,
+    access_token_url='https://graph.facebook.com/v21.0/oauth/access_token',
+    authorize_url='https://www.facebook.com/v21.0/dialog/oauth',
+    api_base_url='https://graph.facebook.com/',
+    # Standard Facebook Page scopes
+    client_kwargs={'scope': 'public_profile,pages_show_list,pages_read_engagement,pages_manage_posts,business_management'},
+)
+oauth.register(
     name='tiktok', client_id=TIKTOK_CLIENT_KEY, client_secret=TIKTOK_CLIENT_SECRET,
     access_token_url='https://open.tiktokapis.com/v2/oauth/token/',
     authorize_url='https://www.tiktok.com/v2/auth/authorize/',

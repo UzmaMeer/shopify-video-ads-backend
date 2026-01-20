@@ -8,9 +8,8 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 VIDEO_DIR = os.path.join(BASE_DIR, "video")
 os.makedirs(VIDEO_DIR, exist_ok=True)
 
-# 🟢 NOW IT IS DYNAMIC!
-# It tries to get the link from .env. If missing, it falls back to your hardcoded Ngrok.
-BASE_PUBLIC_URL = os.getenv("BASE_PUBLIC_URL", "https://snakiest-edward-autochthonously.ngrok-free.dev")
+# 🟢 UPDATE: Default to your AWS URL now (instead of Ngrok)
+BASE_PUBLIC_URL = os.getenv("BASE_PUBLIC_URL", "https://shopify-ext.20thletter.com")
 
 # API Keys
 SHOPIFY_API_SECRET = os.getenv("SHOPIFY_API_SECRET")

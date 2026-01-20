@@ -12,13 +12,13 @@ from routes import video, auth, publish, general
 app = FastAPI()
 
 # --- Middleware ---
-# 🟢 UPDATE: Added your Firebase URLs explicitly so they are trusted
+# 🟢 UPDATE: This list tells AWS who is allowed to connect
 origins = [
     "http://localhost:3000",                     # Local React
-    "https://shopify-video-ads.web.app",         # Live Firebase App
+    "https://shopify-video-ads.web.app",         # 🟢 YOUR LIVE FIREBASE SITE
     "https://shopify-video-ads.firebaseapp.com", # Alternative Firebase Domain
-    BASE_PUBLIC_URL,
-    "https://shopify-ext.20thletter.com"         # Your Custom Domain (if using)
+    "https://shopify-ext.20thletter.com",        # Your AWS Domain
+    BASE_PUBLIC_URL                              # Dynamic URL
 ]
 
 app.add_middleware(
@@ -44,5 +44,4 @@ app.include_router(general.router)
 # --- Root Endpoint ---
 @app.get("/")
 def home(): 
-    # 🟢 UPDATE: Redirects users to your LIVE site now
     return RedirectResponse("https://shopify-video-ads.web.app")

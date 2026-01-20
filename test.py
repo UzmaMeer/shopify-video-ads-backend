@@ -1,34 +1,31 @@
 import os
 from dotenv import load_dotenv
-import google.generativeai as genai
+from pymongo import MongoClient
 
-# 1. Load the .env file
-print("📂 Loading .env file...")
-loaded = load_dotenv()
+# 1. Load Environment Variables
+load_dotenv()
 
-if not loaded:
-    print("❌ ERROR: Could not find or load .env file!")
-    print("   -> Make sure you created a file named '.env' (no name, just extension)")
-    exit()
+# 2. Get the Link
+mongo_link = os.getenv("MONGO_DETAILS")
 
-# 2. Check if Variables exist (Without printing them completely)
-gemini_key = os.getenv("GEMINI_API_KEY")
-base_url = os.getenv("BASE_PUBLIC_URL")
+print("🔍 DIAGNOSTICS:")
+print(f"   1. Mongo Link Found? {'✅ YES' if mongo_link else '❌ NO'}")
 
-print(f"✅ .env Loaded Successfully!")
-print(f"   - BASE_PUBLIC_URL: {base_url if base_url else '❌ MISSING'}")
-print(f"   - GEMINI_API_KEY:  {'✅ Found' if gemini_key else '❌ MISSING'}")
-
-# 3. Test the Key with a real Request
-if gemini_key:
-    print("\n🤖 Testing Gemini API connection...")
+if mongo_link:
+    print(f"   2. Link starts with: {mongo_link[:15]}...") 
+    
+    # 3. Try Connecting
     try:
-        genai.configure(api_key=gemini_key)
-        model = genai.GenerativeModel('gemini-2.5-flash')
-        response = model.generate_content("Say 'Hello from AI' if you can hear me.")
+        client = MongoClient(mongo_link)
+        db = client.video_ai_db
+        count = db.video_jobs.count_documents({})
+        print(f"   3. Connection Success! Found {count} jobs in Cloud DB.")
         
-        print(f"🎉 SUCCESS! API Response: {response.text.strip()}")
+        # 4. Send a Test Signal
+        db.video_jobs.insert_one({"test": "Hello from Python", "status": "debug_test"})
+        print("   4. ✅ Sent a 'Test Document' to Atlas. Check your browser now!")
     except Exception as e:
-        print(f"❌ API KEY FAILED: {str(e)}")
+        print(f"   ❌ Connection Failed: {str(e)}")
 else:
-    print("❌ Cannot test API because the key is missing from .env")
+    print("   ❌ ERROR: Python cannot find 'MONGO_DETAILS' in your .env file.")
+    print("      Make sure you saved the .env file!")

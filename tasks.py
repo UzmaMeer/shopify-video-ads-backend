@@ -13,8 +13,8 @@ from utils import generate_video_from_images
 
 # --- CONFIGURATION ---
 # Database Connection
-mongo_uri = os.getenv("MONGO_DETAILS")
-client = MongoClient(mongo_uri) 
+MONGO_DETAILS = os.getenv("MONGO_DETAILS")
+client = MongoClient(MONGO_DETAILS) 
 db = client.video_ai_db
 video_jobs_collection = db.get_collection("video_jobs")
 
