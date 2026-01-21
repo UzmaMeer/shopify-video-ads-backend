@@ -1,26 +1,33 @@
 import os
 import requests
 import google.generativeai as genai
-from pymongo import MongoClient  # ✅ Using Synchronous client (Best for Workers)
+from pymongo import MongoClient 
 from datetime import datetime
 from dotenv import load_dotenv
+from celery import Celery  # 🟢 Import Celery
 
-# 🟢 Load environment variables from .env file
 load_dotenv()
 
 # 🟢 CRITICAL IMPORT: Imports the video generation logic
 from utils import generate_video_from_images 
 
+# --- 1. CELERY CONFIGURATION (Windows Compatible) ---
+# We define the app here so both the Worker and API can share it
+redis_url = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
+
+celery_app = Celery(
+    "video_tasks",
+    broker=redis_url,
+    backend=redis_url
+)
+
 # --- CONFIGURATION ---
-# Database Connection
 MONGO_DETAILS = os.getenv("MONGO_DETAILS")
 client = MongoClient(MONGO_DETAILS) 
 db = client.video_ai_db
 video_jobs_collection = db.get_collection("video_jobs")
 
-# API Keys
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-# Fallback to Ngrok if env is missing
 BASE_PUBLIC_URL = os.getenv("BASE_PUBLIC_URL", "https://snakiest-edward-autochthonously.ngrok-free.dev")
 
 # --- HELPER FUNCTIONS ---
@@ -34,25 +41,20 @@ def generate_viral_caption(title, desc):
         return f"Check out {title}! #Trending #Fashion"
 
 # --- THE MAIN WORKER FUNCTION ---
+# 🟢 Decorate with @celery_app.task
+@celery_app.task(name="process_video_job_task")
 def process_video_job_task(job_id, image_urls, title, desc, logo_url, voice_gender, duration, script_tone, custom_music_path, video_theme="Modern", shop_name=None):
-    """
-    Executes inside the Worker Process.
-    """
     print(f"🛠️ Worker Starting Job: {job_id}")
 
-    # 1. Helper to update DB progress
     def update_progress_db(percent):
-        # 🟢 Note: 'await' is not needed when using MongoClient
         video_jobs_collection.update_one(
             {"job_id": job_id},
             {"$set": {"progress": percent, "status": "processing", "updated_at": datetime.utcnow()}}
         )
 
     try:
-        # Initial DB Status
         update_progress_db(10)
 
-        # 2. Call Utils to Generate Video
         filename, script_used = generate_video_from_images(
             image_urls=image_urls, 
             product_title=title, 
@@ -62,23 +64,17 @@ def process_video_job_task(job_id, image_urls, title, desc, logo_url, voice_gend
             target_duration=duration, 
             script_tone=script_tone, 
             custom_music_path=custom_music_path, 
-            progress_callback=update_progress_db,  # Pass DB updater
+            progress_callback=update_progress_db,  
             shop_name=shop_name, 
             video_theme=video_theme
         )
         
         if filename:
-            # 3. Update to 98% (Captioning Time)
             update_progress_db(98)
-            
-            # 4. Generate Caption
             smart_caption = generate_viral_caption(title, desc)
-            
-            # Construct URL
             video_url = f"{BASE_PUBLIC_URL}/static/{filename}"
             print(f"✅ Worker Finished: {filename}")
             
-            # 5. Final Success Update in DB
             video_jobs_collection.update_one(
                 {"job_id": job_id},
                 {
